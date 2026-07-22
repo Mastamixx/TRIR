@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRIR &amp; DART Rate Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --charcoal:#1c1f24;
+    --charcoal-2:#262b32;
+    --paper:#f2f0ea;
+    --safety-yellow:#f5b700;
+    --steel-blue:#2c4a52;
+    --alert-red:#c1440e;
+    --line:#3a4048;
+    --ok-green:#3f7d5c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--paper);
+    color:var(--charcoal);
+    font-family:'IBM Plex Sans',sans-serif;
+    line-height:1.5;
+  }
+  .hazard-rule{
+    height:10px;
+    background:repeating-linear-gradient(135deg,var(--safety-yellow) 0 18px,var(--charcoal) 18px 36px);
+  }
+  header{
+    background:var(--charcoal);
+    color:var(--paper);
+    padding:56px 24px 64px;
+  }
+  .wrap{max-width:880px;margin:0 auto;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--safety-yellow);
+    margin-bottom:14px;
+  }
+  h1{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:clamp(32px,5vw,52px);
+    letter-spacing:.01em;
+    text-transform:uppercase;
+    line-height:1.05;
+  }
+  header p{
+    max-width:52ch;
+    margin-top:16px;
+    color:#c7cdd3;
+    font-size:16px;
+  }
+  main{max-width:880px;margin:0 auto;padding:0 24px;}
+  .panel{
+    background:var(--charcoal-2);
+    color:var(--paper);
+    border-radius:2px;
+    margin-top:-40px;
+    padding:36px;
+    position:relative;
+    box-shadow:0 20px 40px rgba(0,0,0,.18);
+  }
+  .tabs{display:flex;gap:0;margin-bottom:28px;border-bottom:1px solid var(--line);}
+  .tab{
+    font-family:'Oswald',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    font-size:14px;
+    font-weight:600;
+    background:none;
+    border:none;
+    color:#8b939c;
+    padding:12px 4px;
+    margin-right:32px;
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+  }
+  .tab.active{color:var(--safety-yellow);border-bottom-color:var(--safety-yellow);}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:560px){.grid{grid-template-columns:1fr;}}
+  label{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#9aa2ab;
+    margin-bottom:6px;
+  }
+  input[type=number]{
+    width:100%;
+    background:#12151a;
+    border:1px solid var(--line);
+    color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:20px;
+    padding:12px 14px;
+    border-radius:2px;
+  }
+  input[type=number]:focus{outline:2px solid var(--safety-yellow);outline-offset:1px;}
+  .field{margin-bottom:18px;}
+  .result-row{
+    margin-top:32px;
+    padding-top:28px;
+    border-top:1px solid var(--line);
+    display:flex;
+    gap:40px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .gauge{width:150px;flex-shrink:0;}
+  .readout{flex:1;min-width:200px;}
+  .readout .label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:#9aa2ab;
+  }
+  .readout .value{
+    font-family:'Oswald',sans-serif;
+    font-size:56px;
+    font-weight:700;
+    line-height:1;
+    margin:6px 0 8px;
+  }
+  .readout .benchmark{font-size:14px;color:#c7cdd3;}
+  .benchmark strong{color:var(--paper);}
+  footer .wrap{padding:20px 24px 60px;}
+  section.explainer{padding:64px 0 24px;}
+  section.explainer h2{
+    font-family:'Oswald',sans-serif;
+    text-transform:uppercase;
+    font-size:26px;
+    letter-spacing:.01em;
+    margin-bottom:14px;
+    border-left:5px solid var(--safety-yellow);
+    padding-left:14px;
+  }
+  section.explainer p{margin-bottom:14px;max-width:68ch;}
+  .formula{
+    font-family:'IBM Plex Mono',monospace;
+    background:var(--charcoal);
+    color:var(--paper);
+    padding:16px 20px;
+    border-radius:2px;
+    margin:16px 0 20px;
+    font-size:15px;
+    overflow-x:auto;
+  }
+  .card-pair{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:8px;}
+  @media (max-width:560px){.card-pair{grid-template-columns:1fr;}}
+  .card{background:#fff;border:1px solid #ddd8cc;border-left:5px solid var(--steel-blue);padding:18px 20px;}
+  .card h3{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.05em;margin-bottom:6px;}
+  .card p{font-size:14px;margin:0;}
+  .disclaimer{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:#6b7280;
+    max-width:68ch;
+    margin-top:36px;
+    border-top:1px solid #ddd8cc;
+    padding-top:20px;
+  }
+  a{color:var(--steel-blue);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">OSHA Recordkeeping / 29 CFR 1904</div>
+    <h1>TRIR &amp; DART Rate Calculator</h1>
+    <p>Enter your recordable incident and work-hour data to get your Total Recordable Incident Rate and DART rate, benchmarked against typical industry ranges.</p>
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+    <div class="tabs">
+      <button class="tab active" id="tab-trir" onclick="switchTab('trir')">TRIR</button>
+      <button class="tab" id="tab-dart" onclick="switchTab('dart')">DART Rate</button>
+    </div>
+
+    <div id="view-trir">
+      <div class="grid">
+        <div class="field">
+          <label for="trir-incidents">Recordable incidents</label>
+          <input type="number" id="trir-incidents" min="0" step="1" value="0" oninput="calc()">
+        </div>
+        <div class="field">
+          <label for="trir-hours">Total hours worked</label>
+          <input type="number" id="trir-hours" min="0" step="1" value="200000" oninput="calc()">
+        </div>
+      </div>
+      <div class="result-row">
+        <svg class="gauge" id="gauge-trir" viewBox="0 0 150 90" aria-hidden="true"></svg>
+        <div class="readout">
+          <div class="label">Your TRIR</div>
+          <div class="value" id="trir-value">0.00</div>
+          <div class="benchmark" id="trir-benchmark">Enter data above to calculate.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-dart" style="display:none;">
+      <div class="grid">
+        <div class="field">
+          <label for="dart-cases">DART cases (days away/restricted/transferred)</label>
+          <input type="number" id="dart-cases" min="0" step="1" value="0" oninput="calc()">
+        </div>
+        <div class="field">
+          <label for="dart-hours">Total hours worked</label>
+          <input type="number" id="dart-hours" min="0" step="1" value="200000" oninput="calc()">
+        </div>
+      </div>
+      <div class="result-row">
+        <svg class="gauge" id="gauge-dart" viewBox="0 0 150 90" aria-hidden="true"></svg>
+        <div class="readout">
+          <div class="label">Your DART Rate</div>
+          <div class="value" id="dart-value">0.00</div>
+          <div class="benchmark" id="dart-benchmark">Enter data above to calculate.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="explainer">
+    <h2>What these numbers mean</h2>
+    <p><strong>TRIR (Total Recordable Incident Rate)</strong> measures how many OSHA-recordable injuries and illnesses your site had, normalized to a standard of 100 full-time workers over a year.</p>
+    <div class="formula">TRIR = (Recordable incidents &times; 200,000) &divide; Total hours worked</div>
+    <p><strong>DART Rate</strong> narrows that down to the more serious cases &mdash; ones involving Days Away, Restricted duty, or job Transfer &mdash; and is often watched more closely by insurers and corporate safety programs.</p>
+    <div class="formula">DART Rate = (DART cases &times; 200,000) &divide; Total hours worked</div>
+    <p>The constant 200,000 represents 100 employees working 40 hours a week, 50 weeks a year &mdash; the baseline OSHA uses so rates are comparable across companies of any size.</p>
+  </section>
+
+  <section class="explainer">
+    <h2>Reading your result</h2>
+    <div class="card-pair">
+      <div class="card">
+        <h3>Below ~2.0</h3>
+        <p>Generally considered strong performance in most manufacturing settings, though "good" varies by NAICS code.</p>
+      </div>
+      <div class="card">
+        <h3>Above ~4.5</h3>
+        <p>Above the general industry average &mdash; often a trigger for deeper incident review and corrective action plans.</p>
+      </div>
+    </div>
+    <p class="disclaimer">Benchmarks shown are general reference points, not official BLS figures for your specific NAICS code. For exact industry averages, check the U.S. Bureau of Labor Statistics injury and illness rate tables for your sector before making compliance or reporting decisions.</p>
+  </section>
+</main>
+
+<div class="hazard-rule"></div>
+<footer><div class="wrap"></div></footer>
+
+<script>
+function drawGauge(el, value, max){
+  const pct = Math.max(0, Math.min(1, value/max));
+  const angle = Math.PI * pct;
+  const cx=75, cy=80, r=65;
+  const x = cx - r*Math.cos(angle);
+  const y = cy - r*Math.sin(angle);
+  const largeArc = pct > 0.5 ? 1 : 0;
+  let color = '#3f7d5c';
+  if(pct > 0.66) color = '#c1440e';
+  else if(pct > 0.33) color = '#f5b700';
+  el.innerHTML = `
+    <path d="M 10 80 A 65 65 0 0 1 140 80" fill="none" stroke="#3a4048" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 10 80 A 65 65 0 ${largeArc} 1 ${x} ${y}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="75" cy="80" r="4" fill="#f2f0ea"/>
+  `;
+}
+
+function switchTab(which){
+  document.getElementById('view-trir').style.display = which==='trir' ? 'block':'none';
+  document.getElementById('view-dart').style.display = which==='dart' ? 'block':'none';
+  document.getElementById('tab-trir').classList.toggle('active', which==='trir');
+  document.getElementById('tab-dart').classList.toggle('active', which==='dart');
+}
+
+function calc(){
+  const ti = parseFloat(document.getElementById('trir-incidents').value) || 0;
+  const th = parseFloat(document.getElementById('trir-hours').value) || 0;
+  const trir = th > 0 ? (ti * 200000) / th : 0;
+  document.getElementById('trir-value').textContent = trir.toFixed(2);
+  drawGauge(document.getElementById('gauge-trir'), trir, 6);
+  const tb = document.getElementById('trir-benchmark');
+  if(th===0){ tb.innerHTML = 'Enter total hours to calculate.'; }
+  else if(trir < 2) tb.innerHTML = `<strong>${trir.toFixed(2)}</strong> &mdash; generally on the stronger end for manufacturing.`;
+  else if(trir < 4.5) tb.innerHTML = `<strong>${trir.toFixed(2)}</strong> &mdash; roughly in the general industry range.`;
+  else tb.innerHTML = `<strong>${trir.toFixed(2)}</strong> &mdash; above typical benchmarks; may warrant incident review.`;
+
+  const di = parseFloat(document.getElementById('dart-cases').value) || 0;
+  const dh = parseFloat(document.getElementById('dart-hours').value) || 0;
+  const dart = dh > 0 ? (di * 200000) / dh : 0;
+  document.getElementById('dart-value').textContent = dart.toFixed(2);
+  drawGauge(document.getElementById('gauge-dart'), dart, 4);
+  const db = document.getElementById('dart-benchmark');
+  if(dh===0){ db.innerHTML = 'Enter total hours to calculate.'; }
+  else if(dart < 1) db.innerHTML = `<strong>${dart.toFixed(2)}</strong> &mdash; generally on the stronger end.`;
+  else if(dart < 2.5) db.innerHTML = `<strong>${dart.toFixed(2)}</strong> &mdash; roughly in the general industry range.`;
+  else db.innerHTML = `<strong>${dart.toFixed(2)}</strong> &mdash; above typical benchmarks; may warrant review.`;
+}
+
+calc();
+</script>
+
+</body>
+</html>
